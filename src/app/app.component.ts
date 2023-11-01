@@ -19,7 +19,7 @@ export class AppComponent implements AfterViewInit {
   selectedState: string = '';
   selectedCountryStates: string[] = [];
   currentMapSeries: any | null = null; // Store the current map series
-
+  stateNames: string[] = [];
   getCountries(): any[] {
     return Object.values(countries);
   }
@@ -139,10 +139,15 @@ export class AppComponent implements AfterViewInit {
   }
 
   onCountryChange() {
+    debugger
+    this.stateNames = [];
     const name = this.selectedCountry;
     const countryCode = getCountryCode(name);
     
     if (countryCode) {
+      const states = State.getStatesOfCountry(countryCode);
+      this.stateNames = states.map(state => state.name);
+      console.log("State",this.stateNames);
       this.selectCountry(countryCode.toLowerCase());
     } else {
       console.error(`No ISO2 code found for ${this.selectedCountry}`);

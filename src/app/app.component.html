@@ -23,6 +23,12 @@
     <option *ngFor="let country of countries" [value]="country.name">{{ country.name }}</option>
   </select>
 </div>
-
+<div *ngIf="stateNames.length > 0">
+  <label for="stateDropdown">Select a State:</label>
+  <select id="stateDropdown" [(ngModel)]="selectedState" (change)="onStateChange()">
+    <option value="">Select a state</option>
+    <option *ngFor="let state of stateNames" [value]="state">{{ state }}</option>
+  </select>
+</div>
 
 <div class="container" #chartContainer></div>
