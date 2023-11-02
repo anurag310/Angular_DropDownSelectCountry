@@ -145,6 +145,7 @@ export class AppComponent implements AfterViewInit {
     const countryCode = getCountryCode(name);
     
     if (countryCode) {
+      
       const states = State.getStatesOfCountry(countryCode);
       this.stateNames = states.map(state => state.name);
       console.log("State",this.stateNames);
@@ -154,10 +155,46 @@ export class AppComponent implements AfterViewInit {
     }
   }
 
+  // onStateChange() {
+  //   if (this.selectedState) {
+  //     this.selectState(this.selectedState);
+  //   }
+  // }
   onStateChange() {
+    debugger;
+  
     if (this.selectedState) {
-      this.selectState(this.selectedState);
+      const stateName = this.selectedState;
+  
+      // Get the country code
+      const countryCode = getCountryCode(this.selectedCountry);
+  
+      if (countryCode) {
+        const countryISOCodeMapping = this.getStatesISOCodesByCountryCode(countryCode);
+        const stateCode = countryISOCodeMapping[stateName];
+  
+        if (stateCode) {
+          // Use the stateCode and countryCode as needed
+          this.selectState(stateCode.toLowerCase(), countryCode.toLowerCase());
+        } else {
+          console.error(`No ISO Code found for ${stateName}`);
+        }
+      } else {
+        console.error(`No ISO2 code found for ${this.selectedCountry}`);
+      }
     }
+  }
+  
+  getStatesISOCodesByCountryCode(countryCode: string): { [key: string]: string } {
+    debugger
+    const states = State.getStatesOfCountry(countryCode);
+    const isoCodeMapping: { [key: string]: string } = {};
+  
+    for (const state of states) {
+      isoCodeMapping[state.name] = state.isoCode;
+    }
+    
+    return isoCodeMapping;
   }
 
   selectCountry(countryCode: string) {
@@ -185,13 +222,34 @@ export class AppComponent implements AfterViewInit {
   }
   
 
-  selectState(stateCode: string) {
+  selectState(stateCode: string, countryCode: string) {
+    debugger
     const chart = this.chart;
     chart.showLoading(`Loading map for ${stateCode}...`);
 
-    // Fetch and display the state-level map here
-    // You can use a similar approach as for the country map
+    // Construct the URL based on the naming convention
+    const url = `https://code.highcharts.com/mapdata/countries/${countryCode}/${countryCode}-${stateCode}-all.topo.json`;
+
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch map data for ${stateCode}, ${countryCode}. Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((stateData) => {
+        chart.hideLoading();
+        this.removeMapSeries();
+        this.addMapSeries(stateCode, Highcharts.geojson(stateData));
+      })
+      .catch((error) => {
+        chart.hideLoading();
+        console.error(error);
+      });
+
+    this.selectedState = ''; // Clear the selected state when a new state is selected
   }
+
 
   // Function to add a map series
   addMapSeries(name: string, data: any) {
